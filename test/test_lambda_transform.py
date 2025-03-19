@@ -36,10 +36,10 @@ MOCK_ENVIROMENT = True
 def hardcoded_variables():
     hardcoded_variables = {}
     hardcoded_variables["ingestion_bucket_name"] = (
-        "totesys-ingestion-zone-fenor-dummy-test-TDD-fabio-and-connor"
+        "dummy-ingestion-bucket"
     )
     hardcoded_variables["processing_bucket_name"] = (
-        "totesys-processing-zone-fenor-dummy-test-TDD-fabio-and-connor"
+        "dummy-processing-bucket"
     )
     hardcoded_variables["list_of_toteSys_tables"] = ["tableA", "tableB"]
     hardcoded_variables["AccountId"] = "AccountId"
@@ -71,9 +71,6 @@ def hardcoded_variables():
     }
 
     return hardcoded_variables
-
-
-# %% fixtures
 
 
 @pytest.fixture()
@@ -172,7 +169,6 @@ def snapshot_data_dict(hardcoded_variables):
 
 @pytest.fixture()
 def s3_client__populated_bucket(s3_client, hardcoded_variables):
-    # placeholder puesdocode
 
     placeholder_shadow_realm_bucket_name = "i dunno"
 
@@ -244,8 +240,6 @@ def sales_order_table_columns():
 
 @pytest.fixture()
 def return_unique_dates_mentioned_in_first_10_rows_of_sale_table():
-    # Fabio and Connor printed out the first 10 rows of the sample sales table and manually extracted the unique dates mentioned
-    # this includes dates mentioned in datetimes
     list_unique_dates = [
         "2022-11-03",
         "2022-11-04",
@@ -261,14 +255,6 @@ def return_unique_dates_mentioned_in_first_10_rows_of_sale_table():
     return list_unique_dates
 
 
-# %% tests
-
-# pg8000_rows, pg8000_cols = example_sales_order_table
-# table_name = "sales_order" # not sure if this is hardcoding
-# expected_object_key = return_s3_key__injection_bucket(table_name) # Action: I reckon there is a way to extract the table name from the variable metadata
-
-
-# @pytest.mark.timeout(10)
 class TestReads3TableJson:
     def test_1a_can_read_s3_json(
         self, s3_client, hardcoded_variables, return_list_of_cities_in_address_df
@@ -311,21 +297,12 @@ class TestReads3TableJson:
 
         # assert - the cities are extracting correctly
         assert list(actual_df_addresses_table["city"].values) == expected_cities
-
-        # assert other things
         assert isinstance(actual_df_addresses_table, pd.DataFrame)
 
 
 class TestCreateDateTable:
     """
-    This is a test to see if we can create (and test) the creation of the dim_designs table with the "Sales" schema
-
-    One could argue that this table is not very hard to transform
-
-    However it is an initial experiment into transforming the data(and making sure we can test it with mock_AWS)
-
-    Post test there will be more complex/comprehensive test sfor the larger requested star schemas (reusing much of this code)
-
+    Test to see if we can create the creation of the dim_designs table with the "Sales" schema.
     """
 
     def test_2a_dim_dates_table_is_created_in_correct_position(
@@ -336,24 +313,12 @@ class TestCreateDateTable:
         return_unique_dates_mentioned_in_first_10_rows_of_sale_table,
     ):
         """
-        this particially addresses:
-            1. Must place the results in the "processed" S3 bucket.
-                a. create dim_dates table and is in the correct_position
-
-        This test verifies that the parquet for the sales table is created, this may have to be refactored lol
-
-        Expected behavior:
-        input: df
-
-
-        - read_s3_table_json()
-
-
-        XXXXXXXXXXXXXXXXXX NEXT ACTION XXXXXXXXXXXXXXXXXX:
-         - make a ficture with s3_popualuted_design_table
-
-
+        Tests:
+        1. Data is places in processed s3 bucket
+        2. dim_dates table created and is in the correct_position
+        3. Verifies that the parquet for the sales table is created
         """
+
         # assemble
         s3_client, datetime_string = (
             s3_client_ingestion_populated_with_totesys_sales_order_jsonl_inc_datetime_str
@@ -380,7 +345,6 @@ class TestCreateDateTable:
         assert isinstance(df_dim_dates, pd.DataFrame)
 
         # assert_unique_dates_exist
-
         actual_dates_stored = set(
             f"{YYYY}-{int(MM):02d}-{int(DD):02d}"
             for YYYY, MM, DD in zip(
@@ -876,7 +840,7 @@ class TestCreateCounterpartyTables:
         )
 
 
-class TestCreatestaffTables:
+class TestCreateStaffTables:
     def test_6a_dim_staff_table_is_created_in_correct_position(
         self, s3_client_ingestion_populated_with_totesys_jsonl, hardcoded_variables
     ):
@@ -987,7 +951,7 @@ class TestCreatestaffTables:
         assert all(expected_location == s3_file["location"])
 
 
-class TestCreatescurrencyTables:
+class TestCreateCurrencyTables:
     def test_7a_dim_currency_table_is_created_in_correct_position(
         self, s3_client_ingestion_populated_with_totesys_jsonl, hardcoded_variables
     ):

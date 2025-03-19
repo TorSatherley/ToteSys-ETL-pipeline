@@ -1,4 +1,3 @@
-# import dask.dataframe as dd
 import io
 import pandas as pd
 import json
@@ -13,9 +12,7 @@ from io import BytesIO
 
 def read_s3_table_json(s3_client, s3_key, ingestion_bucket_name):
     """
-    targets give json table in the injestion table and returns a df
-
-    return s3_df
+    Pets json file from the ingestion table and returns a dataframe
     """
     response = s3_client.get_object(Bucket=ingestion_bucket_name, Key=s3_key)
     json_data = response["Body"].read().decode("utf-8")
@@ -26,14 +23,16 @@ def read_s3_table_json(s3_client, s3_key, ingestion_bucket_name):
 
 
 def populate_parquet_file(s3_client, datetime_string, table_name, df_file, bucket_name):
-
+    '''
+    Converts dataframe to parquet and loads it into the 'processed' S3 bucket.
+    '''
     try:
         key = return_s3_key(table_name, datetime_string, extension=".parquet")
         table = pa.Table.from_pandas(df_file)
 
         buffer = io.BytesIO()
         pq.write_table(table, buffer)
-        buffer.seek(0)  # Reset buffer positio
+        buffer.seek(0)  # Reset buffer position
         response = s3_client.put_object(
             Bucket=bucket_name, Key=key, Body=buffer.getvalue()
         )
@@ -44,8 +43,7 @@ def populate_parquet_file(s3_client, datetime_string, table_name, df_file, bucke
 
 
 def _return_df_dim_dates(df_totesys_sales_order):
-    # %% produce unique dates mentioned
-
+    ''' Produce unique dates for dim_dates table '''
     # reduce to just datetime and date columns
     list_target_columns = [
         "created_at",
@@ -58,7 +56,6 @@ def _return_df_dim_dates(df_totesys_sales_order):
     # trim off datetimes
     for col in list_target_columns:
         df_reduced[col] = df_reduced[col].apply(lambda x: x[:10])
-        # df_reduced[col] = df_reduced[col].astype('date64') # slow, also date64 likely wrong spelling
 
     # finalise dates in table
     all_values = []
@@ -66,8 +63,6 @@ def _return_df_dim_dates(df_totesys_sales_order):
         all_values += list(x)
     unique_list_of_dates = list(set(all_values))
     unique_list_of_dates.sort()
-
-    # %% produce entries for this date
 
     months_dict = {
         1: "january",
@@ -102,7 +97,6 @@ def _return_df_dim_dates(df_totesys_sales_order):
                 quarter_int,
             ]
         ]
-    index = range(len(data))
     columns = [
         "date_id",
         "year",
@@ -120,6 +114,7 @@ def _return_df_dim_dates(df_totesys_sales_order):
 
 
 def _return_df_dim_design(df_totesys_design):
+    ''' Returns the extrapolated data for the dim_design table '''
 
     columns = ["design_id", "design_name", "file_location", "file_name"]
     df_design_copy = copy(df_totesys_design)
@@ -130,7 +125,7 @@ def _return_df_dim_design(df_totesys_design):
 
 
 def _return_df_dim_location(df_totesys_address):
-
+    ''' Returns the extrapolated data for the dim_location table '''
     columns = [
         "address_id",
         "address_line_1",
@@ -150,7 +145,7 @@ def _return_df_dim_location(df_totesys_address):
 
 
 def _return_df_dim_counterparty(df_totesys_counterparty, df_totesys_address):
-
+    ''' Returns the extrapolated data for the dim_counterparty table '''
     df_count = copy(
         df_totesys_counterparty[
             ["counterparty_id", "counterparty_legal_name", "legal_address_id"]
@@ -194,7 +189,7 @@ def _return_df_dim_counterparty(df_totesys_counterparty, df_totesys_address):
 
 
 def _return_df_dim_staff(df_totesys_staff, df_totesys_department):
-    # Ensure the required columns exist in both DataFrames
+    ''' Returns the extrapolated data for the dim_staff table '''
     staff_columns = [
         "staff_id",
         "first_name",
@@ -231,6 +226,7 @@ def _return_df_dim_staff(df_totesys_staff, df_totesys_department):
 
 
 def _return_df_dim_currency(df_totesys_currency):
+    ''' Returns the extrapolated data for the dim_currency table '''
     columns = ["currency_id", "currency_code", "currency_name"]
     currency_name_values = {
         "GBP": "Great British Pounds",
@@ -248,6 +244,7 @@ def _return_df_dim_currency(df_totesys_currency):
 
 
 def _return_df_fact_sales_order(df_totesys_sales_order):
+    ''' Returns the data for the fact_sales_order table '''
     columns = [
         "sales_record_id",
         "sales_order_id",

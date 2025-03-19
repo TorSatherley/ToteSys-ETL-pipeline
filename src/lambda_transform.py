@@ -40,19 +40,12 @@ def lambda_handler(event, context):
     the 'processed' S3 bucket, ready for loading.
     """
     try:
-        # load_dotenv()
-        # set up connection
-
-        # read_s3_table_json(s3_client, s3_key, ingestion_bucket_name)
-
         # variables prep
         datetime_string = event["datetime_string"]
         s3_client = boto3.client("s3", region_name="eu-west-2")
         ingestion_bucket_name = os.environ.get("INGESTION_BUCKET")
         processed_bucket_name = os.environ.get("PROCESSED_BUCKET")
         responses = []
-
-        output_data = {"quotes": []}
 
         # testing_backdoor
         if "testing_client" in event.keys() != None:
@@ -177,25 +170,3 @@ def lambda_handler(event, context):
             }
     except Exception as e:
         return str(e)
-
-
-# Some code for live testing
-
-# if __name__ == "__main__":
-#
-#    load_dotenv()
-#    s3 = boto3.client("s3")
-#
-#
-#
-#    datetime_str = return_datetime_string()
-#
-#    jsonl_list = ["address","counterparty","currency","department","design","sales_order","staff"]
-#    for jsonl_file in jsonl_list:
-#        key = return_s3_key(jsonl_file, datetime_str)
-#        with open(f"data/json_lines_s3_format/{jsonl_file}.jsonl", "rb") as file:
-#            s3.put_object(Bucket=os.environ.get("INJESTION_BUCKET_NAME"), Key=key, Body=file.read())
-#
-#
-#    event = {"datetime_string":datetime_str}
-#    result = lambda_handler(event, "context")
