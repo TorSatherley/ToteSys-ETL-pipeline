@@ -57,9 +57,11 @@ def lambda_handler(event, context):
         print(
             f"Log: Batch extraction completed - {datetime.today().strftime('%Y-%m-%d_%H-%M-%S')}"
         )
-        return {"message": "Batch extraction job completed",
-                "statusCode": 200,
-                "datetime_string" : datetime_string}
+        return {
+            "message": "Batch extraction job completed",
+            "statusCode": 200,
+            "datetime_string": datetime_string,
+        }
     except (
         ClientError,
         NoCredentialsError,

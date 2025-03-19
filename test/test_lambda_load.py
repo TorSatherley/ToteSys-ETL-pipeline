@@ -4,13 +4,9 @@ import boto3
 import psycopg2
 from unittest.mock import MagicMock, patch
 from moto import mock_aws
-import pandas as pd
 
-from src.lambda_load import (
-    load_connection,
-    lambda_handler,
-    dw_credentials
-)
+from src.lambda_load import load_connection_psycopg2, lambda_handler, dw_cleanup
+
 
 @pytest.fixture(scope="function", autouse=True)
 def aws_credentials():
@@ -23,10 +19,14 @@ def aws_credentials():
     os.environ["BUCKET_NAME"] = "test_bucket"
     os.environ["SECRET_NAME"] = "test-secret"
 
-LATEST_FOLDER="data/"
+
+LATEST_FOLDER = "data/"
+
 
 def create_test_db():
-    conn = psycopg2.connect(dbname='postgres', user='postgres', password='password', host='localhost')
+    conn = psycopg2.connect(
+        dbname="postgres", user="postgres", password="password", host="localhost"
+    )
     conn.autocommit = True
     cursor = conn.cursor()
     cursor.execute("DROP DATABASE IF EXISTS test_db;")
@@ -34,21 +34,28 @@ def create_test_db():
     cursor.close()
     conn.close()
 
+
 def drop_test_db():
-    conn = psycopg2.connect(dbname='postgres', user='postgres', password='password', host='localhost')
+    conn = psycopg2.connect(
+        dbname="postgres", user="postgres", password="password", host="localhost"
+    )
     conn.autocommit = True
     cursor = conn.cursor()
     cursor.execute("DROP DATABASE IF EXISTS test_db;")
     cursor.close()
     conn.close()
 
+
 @pytest.fixture(scope="function")
 def postgres_test_db():
     create_test_db()
-    conn = psycopg2.connect(dbname='test_db', user='postgres', password='password', host='localhost')
+    conn = psycopg2.connect(
+        dbname="test_db", user="postgres", password="password", host="localhost"
+    )
     cursor = conn.cursor()
-    
-    cursor.execute('''
+
+    cursor.execute(
+        """
         CREATE TABLE dim_staff (
             staff_id SERIAL PRIMARY KEY,
             first_name VARCHAR,
@@ -57,24 +64,26 @@ def postgres_test_db():
             location VARCHAR,
             email_address VARCHAR
         );
-    ''')
+    """
+    )
     conn.commit()
-    
+
     # Insert sample data
-    cursor.execute('''
+    cursor.execute(
+        """
         INSERT INTO dim_staff 
         (first_name, last_name, department_name, location, email_address)
         VALUES 
         ('John', 'Doe', 'Development', 'Leeds', 'john.doe@example.com'),
         ('Jane', 'Smith', 'Marketing', 'Manchester', 'jane.smith@example.com');
-    ''')
+    """
+    )
     conn.commit()
-    
+
     yield conn
     cursor.close()
     conn.close()
     drop_test_db()
-
 
 
 @pytest.fixture(scope="function")
@@ -105,18 +114,17 @@ class TestDbConnection:
     #     assert conn.closed == 0
 
     def test_db_exception_if_failure_of_credentials(self):
-        dw_access = { 
-        'dbname': 'test',
-        'user': 'postgres',
-        'password': 'test',
-        'host': 'test',
-        'port': 5432
-         }
-        conn = load_connection()
-        print(conn)
+        dw_access = {
+            "dbname": "test",
+            "user": "postgres",
+            "password": "test",
+            "host": "test",
+            "port": 5432,
+        }
+        conn = load_connection_psycopg2(dw_access)
+        #print(conn)
 
         assert False
-
 
     # def test_lambda_handler(self, postgres_test_db, mock_s3):
     #     event = {}

@@ -4,12 +4,13 @@ import os
 import psycopg2
 import pandas as pd
 import json
-import time 
+import time
 from src.utils import get_secret
-from src.lambda_transform_utils import (return_s3_key)
+from src.lambda_transform_utils import return_s3_key
+
 
 def lambda_handler(event, context):
-    """moves parquet files from the """
+    """moves parquet files from the"""
     try:
         # Retrieve credentials
         sm_client = boto3.client(service_name="secretsmanager", region_name="eu-west-2")
@@ -19,21 +20,29 @@ def lambda_handler(event, context):
             secret_name = event["SECRET_NAME"]
         db_credentials = get_secret(sm_client, secret_name)
         dw_cleanup(db_credentials)
-        
+
         # Connection
         print("Loading started...")
         start_time = time.time()
         conn = load_connection_psycopg2(db_credentials)
         cursor = conn.cursor()
 
-        bucket_name = 'totesys-processed-zone-fenor'
+        bucket_name = "totesys-processed-zone-fenor"
         s3_client = boto3.client("s3", region_name="eu-west-2")
-        
-        list_of_tables = ["dim_date", "dim_design", "dim_location", "dim_counterparty", "dim_staff", "dim_currency", "fact_sales_order"]
+
+        list_of_tables = [
+            "dim_date",
+            "dim_design",
+            "dim_location",
+            "dim_counterparty",
+            "dim_staff",
+            "dim_currency",
+            "fact_sales_order",
+        ]
 
         # Insert statement
         for file in list_of_tables:
-            
+
             # Read parquet file
             s3_key = return_s3_key(file, event["datetime_string"], extension=".parquet")
             s3_response = s3_client.get_object(Bucket=bucket_name, Key=s3_key)
@@ -63,11 +72,12 @@ def lambda_handler(event, context):
         cursor.close()
         conn.close()
         end_time = time.time()
-        execution_time = end_time - start_time 
+        execution_time = end_time - start_time
         print(execution_time / 60)
         return {"message": "Successfully uploaded to data warehouse"}
     except Exception as e:
-        return {'message': f'Error: {e}'}
+        return {"message": f"Error: {e}"}
+
 
 def load_connection_psycopg2(db_credentials):
     try:
@@ -76,12 +86,16 @@ def load_connection_psycopg2(db_credentials):
             user=db_credentials["user"],
             password=db_credentials["password"],
             host=db_credentials["host"],
-            port=5432
+            port=5432,
         )
         return conn
     except Exception as e:
-        return {"message": str(e) + ", this is likely a secret credentials issue, either they are wrong or the connection to the aws manager couldn't be made"}
-    
+        return {
+            "message": str(e)
+            + ", this is likely a secret credentials issue, either they are wrong or the connection to the aws manager couldn't be made"
+        }
+
+
 def dw_cleanup(db_credentials):
     conn = load_connection_psycopg2(db_credentials)
     cursor = conn.cursor()
@@ -95,5 +109,13 @@ def dw_cleanup(db_credentials):
     conn.commit()
     return {"message": "Date Warehouse restored to default state."}
 
-    
-print(lambda_handler({"datetime_string":"20250312_143803", "SECRET_NAME":"data-warehouse-credentials"},{}))
+
+print(
+    lambda_handler(
+        {
+            "datetime_string": "20250312_143803",
+            "SECRET_NAME": "data-warehouse-credentials",
+        },
+        {},
+    )
+)
