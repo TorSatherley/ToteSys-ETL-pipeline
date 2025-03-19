@@ -162,13 +162,3 @@ def return_datetime_string():
         timestamp.minute,
     )
     return f"{year}-{month}-{day}_{hour}-{minute}"
-
-
-def simple_read_parquet_file_into_dataframe(bucket_name, key, s3_client):
-    """source: https://stackoverflow.com/questions/51027645/how-to-read-a-single-parquet-file-in-s3-into-pandas-dataframe-using-boto3"""
-    # Read the parquet file
-    buffer = io.BytesIO()
-    object = s3_client.Object(bucket_name, key)
-    object.download_fileobj(buffer)
-    df = pd.read_parquet(buffer)
-    return df
