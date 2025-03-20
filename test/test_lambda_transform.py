@@ -163,7 +163,6 @@ def snapshot_data_dict(hardcoded_variables):
         rows, cols = json_to_pg8000_output(path, include_cols_in_output=True)
         snapshot_data_dict[key] = {"rows": rows, "cols": cols}
 
-    # TO DO: this will take all the snapshot data from the jsons and place them into dfs in a dict for later testing
     return snapshot_data_dict
 
 

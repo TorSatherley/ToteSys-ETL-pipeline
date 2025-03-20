@@ -107,11 +107,27 @@ def mock_s3():
 
 
 class TestDbConnection:
-    # def test_db_is_a_connection_object(self):
-    #     conn = load_connection()
+    def test_db_is_a_connection_object(self):
+        dw_access = {
+            "dbname": "test",
+            "user": "postgres",
+            "password": "test",
+            "host": "test",
+            "port": 5432,
+        }
+        conn = load_connection_psycopg2(dw_access)
 
-    #     assert isinstance(conn, psycopg2.extensions.connection)
-    #     assert conn.closed == 0
+        assert isinstance(conn, psycopg2.extensions.connection)
+
+
+    def test_db_exception_if_failure_of_credentials(self):
+        dw_fake_creds = {
+            'fake': 'credentials'
+        }
+
+        with pytest.raises(Exception):
+            conn = load_connection_psycopg2(dw_fake_creds)
+
 
     def test_db_exception_if_failure_of_credentials(self):
         dw_access = {
@@ -121,14 +137,14 @@ class TestDbConnection:
             "host": "test",
             "port": 5432,
         }
-        conn = load_connection_psycopg2(dw_access)
-        #print(conn)
 
-        assert False
+        with pytest.raises(Exception):
+            conn = load_connection_psycopg2(dw_access)
 
-    # def test_lambda_handler(self, postgres_test_db, mock_s3):
-    #     event = {}
-    #     event['datetime_string'] = 'data/'
-    #     test_result = lambda_handler(event,{})
 
-    #     assert test_result['message'] == 'Successfully uploaded to data warehouse'
+    def test_lambda_handler(self, postgres_test_db, mock_s3):
+        event = {}
+        event['datetime_string'] = 'data/'
+        test_result = lambda_handler(event,{})
+
+        assert test_result['message'] == 'Successfully uploaded to data warehouse'
