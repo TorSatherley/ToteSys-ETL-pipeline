@@ -103,18 +103,18 @@ If missing, install from [Terraform docs](https://developer.hashicorp.com/terraf
 
 ## Run Locally
 
-Fork the repo from https://github.com/TorSatherley/team-fenor-de-project
+Fork the repo from https://github.com/TorSatherley/ToteSys-ETL-pipeline
 
 Clone the project:
 
 ```bash
-  git clone https://github.com/TorSatherley/team-fenor-de-project
+  git clone https://github.com/TorSatherley/ToteSys-ETL-pipeline
 ```
 
 Go to the project directory:
 
 ```bash
-  cd team-fenor-de-project
+  cd ToteSys-ETL-pipeline
 ```
 
 Create a new Virtual Environment (recommended):
