@@ -142,6 +142,8 @@ class TestDbConnection:
             conn = load_connection_psycopg2(dw_access)
 
 
+class TestLambdaHandler:
+    
     def test_lambda_handler(self, postgres_test_db, mock_s3):
         event = {}
         event['datetime_string'] = 'data/'
